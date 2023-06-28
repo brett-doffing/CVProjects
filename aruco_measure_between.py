@@ -36,11 +36,6 @@ with open('./calibration/rgb/calibration.pkl', 'rb') as f:
 # Connect to device and start pipeline
 with dai.Device(pipeline) as device:
     q = device.getOutputQueue(name="rgb", maxSize=4, blocking=False)
-    # calib_data = device.readCalibration()
-    # mtx = np.array(calib_data.getCameraIntrinsics((cam_rgb.getBoardSocket())))
-    # dist = np.array(calib_data.getDistortionCoefficients((cam_rgb.getBoardSocket())))
-    # print(mtx)
-    # print(dist)
 
     while True:
         preview = q.get()
@@ -54,7 +49,6 @@ with dai.Device(pipeline) as device:
         if len(corners) > 0:
             for i in range(0, len(ids)):
                 (top_left, top_right, bottom_right, bottom_left) = corners[i].reshape((4, 2))
-                # print(f"Marker:\n{ids[i]}")
                 marker_corners = np.array([
                     top_left, 
                     top_right, 
@@ -72,30 +66,17 @@ with dai.Device(pipeline) as device:
                 )  
                 axis = np.float32([[0., 0., 0.]])
                 ret, rvecs, tvecs = cv2.solvePnP(objp, marker_corners, mtx, dist)
-                # print(f"tvecs1:\n{tvecs*3}")
                 center_point, _ = cv2.projectPoints(axis, rvecs, tvecs, mtx, dist)
                 center_point = np.int32(center_point).reshape(-1,2)
-                # print((int(top_left[0]),int(top_left[1])))
                 pts_arr.append((int(top_left[0]),int(top_left[1])))
-
-                # rvecs, tvecs, markerPoints = cv2.aruco.estimatePoseSingleMarkers(corners[i], 7.62, mtx, dist)
-                # print(f"tvecs2:\n{tvecs}")
-                # center_point, _ = cv2.projectPoints(axis, rvecs, tvecs, mtx, dist)
-                # center_point = np.int32(center_point).reshape(-1,2)
-                # cv2.circle(frame, center_point[0], 2, (0,0,255), 2)
 
                 if tvecs is not None:
                     rvec = np.squeeze(rvecs, axis=None)
                     tvec = np.squeeze(tvecs, axis=None)
                     tvec_arr.append(tvec)
-                    # tvec = np.expand_dims(tvec, axis=1)
-                    # rvec_matrix = cv2.Rodrigues(rvec)[0]
-                    # proj_matrix = np.hstack((rvec_matrix,tvec))
-                    # decomposed = cv2.decomposeProjectionMatrix(proj_matrix)
-                    # euler_angles = decomposed[6]
+
         if len(tvec_arr) == 2:
             euc_dist = np.linalg.norm((tvec_arr[0] - tvec_arr[1]))*3
-            # print(f"euc_dist = {euc_dist*3}")
             pt1 = pts_arr[0]
             pt2 = pts_arr[1]
             cv2.line(frame, tuple(pts_arr[0]), tuple(pts_arr[1]), (0,255,0), 2)
