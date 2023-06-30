@@ -3,6 +3,7 @@ import depthai as dai
 import numpy as np
 import pickle
 
+## Oak-D Camera Setup ##
 # Create pipeline
 pipeline = dai.Pipeline()
 
@@ -15,16 +16,17 @@ xout_rgb.setStreamName("rgb")
 cam_rgb.setPreviewSize(640, 480)
 cam_rgb.setResolution(dai.ColorCameraProperties.SensorResolution.THE_1080_P)
 cam_rgb.setBoardSocket(dai.CameraBoardSocket.RGB)
-
 cam_rgb.preview.link(xout_rgb.input)
 
+
+## Aruco Marker Setup ##
 aruco_dict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_5X5_100)
 parameters = cv2.aruco.DetectorParameters()
 aruco_length = 7.62 # cm => 3 in.
 
-mtx = []
-dist = []
-
+## Camera Calibration ##
+mtx = [] # camera matrix
+dist = [] # distortion matrix
 with open('./calibration/rgb/calibration.pkl', 'rb') as f:
     cc = pickle.load(f)
     print(cc)
@@ -33,7 +35,7 @@ with open('./calibration/rgb/calibration.pkl', 'rb') as f:
     dist = cc[1]
     print(dist)
 
-# Connect to device and start pipeline
+# Connect to device (oak-d) and start pipeline
 with dai.Device(pipeline) as device:
     q = device.getOutputQueue(name="rgb", maxSize=4, blocking=False)
 
